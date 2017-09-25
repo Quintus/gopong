@@ -133,6 +133,13 @@ func (self *Ball) Draw() {
 func (self *Ball) Reset() {
 	self.X = float32(WINDOWWIDTH) * 0.5
 	self.Y = float32(WINDOWHEIGHT) * 0.5
+	self.Xspeed = SPEED
+	self.Yspeed = SPEED
+}
+
+func (self *Ball) Turn() {
+	self.Xspeed *= -1.1
+	self.Yspeed *= 1.1
 }
 
 func main() {
@@ -204,12 +211,13 @@ func draw (game_objects []GameObject) {
 }
 
 func check_collisions(player1 *Player, player2 *Player, ball *Ball) {
+	// Return ball and speed it up
 	for x := ball.X - 0.5 * ball.Radius; x < ball.X + 0.5 * ball.Radius; x++ {
 		if (x >= player1.X && x < player1.X + player1.W) && (ball.Y >= player1.Y && ball.Y < player1.Y + player1.H) {
-			ball.Xspeed = -ball.Xspeed
+			ball.Turn()
 			break
 		} else if (x >= player2.X && x < player2.X + player2.W) && (ball.Y >= player2.Y && ball.Y < player2.Y + player2.H) {
-			ball.Xspeed = -ball.Xspeed
+			ball.Turn()
 			break
 		}
 	}
@@ -217,14 +225,10 @@ func check_collisions(player1 *Player, player2 *Player, ball *Ball) {
 	if ball.X <= 0 {
 		player2.Points += 1
 
-		player1.Reset()
-		player2.Reset()
 		ball.Reset()
 	} else if ball.X + ball.Radius * 0.5 >= float32(WINDOWWIDTH) {
 		player1.Points += 1
 
-		player1.Reset()
-		player2.Reset()
 		ball.Reset()
 	}
 }
