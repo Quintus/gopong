@@ -48,6 +48,7 @@ type Player struct {
 	H float32
 	Speed float32
 	Points int
+	origX float32
 }
 
 type Ball struct {
@@ -63,8 +64,18 @@ type GameObject interface {
 	Draw()
 }
 
-func NewPlayer() *Player {
-	return &Player{0.0, 0.0, 5.0, 20.0, 0.0, 0}
+func NewPlayer(x float32) *Player {
+	var player Player
+	player.W = 5.0
+	player.H = 20.0
+	player.origX = x
+	player.Reset()
+	return &player
+}
+
+func (self *Player) Reset() {
+	self.X = self.origX
+	self.Y = float32(WINDOWHEIGHT) * 0.5 - self.H * 0.5
 }
 
 func (self *Player) Update() {
@@ -91,7 +102,12 @@ func (self *Player) Move(delta float32) {
 }
 
 func NewBall() *Ball {
-	return &Ball{0.0, 0.0, 5.0, SPEED, SPEED}
+	var ball Ball
+	ball.Radius = 5.0
+	ball.Xspeed = SPEED
+	ball.Yspeed = SPEED
+	ball.Reset()
+	return &ball
 }
 
 func (self *Ball) Update() {
@@ -112,6 +128,11 @@ func (self *Ball) Draw() {
 		C.float(self.Y),
 		C.float(self.Radius),
 		C.al_map_rgb(0, 0, 255))
+}
+
+func (self *Ball) Reset() {
+	self.X = float32(WINDOWWIDTH) * 0.5
+	self.Y = float32(WINDOWHEIGHT) * 0.5
 }
 
 func main() {
@@ -137,20 +158,11 @@ func main() {
 }
 
 func mainloop(p_evqueue *C.ALLEGRO_EVENT_QUEUE) {
-	player1 := NewPlayer()
-	player2 := NewPlayer()
+	player1 := NewPlayer(50.0)
+	player2 := NewPlayer(float32(WINDOWWIDTH) - 50.0)
 	ball := NewBall()
 
 	game_objects := [...]GameObject{ player1, player2, ball }
-
-	player1.X = 100
-	player1.Y = 100
-
-	player2.X = 400
-	player2.Y = 100
-
-	ball.X = 200
-	ball.Y = 200
 
 	run := true
 	for run {
@@ -204,12 +216,16 @@ func check_collisions(player1 *Player, player2 *Player, ball *Ball) {
 
 	if ball.X <= 0 {
 		player2.Points += 1
-		ball.X = float32(WINDOWWIDTH) * 0.5
-		ball.Y = float32(WINDOWHEIGHT) * 0.5
+
+		player1.Reset()
+		player2.Reset()
+		ball.Reset()
 	} else if ball.X + ball.Radius * 0.5 >= float32(WINDOWWIDTH) {
-		ball.X = float32(WINDOWWIDTH) * 0.5
-		ball.Y = float32(WINDOWHEIGHT) * 0.5
 		player1.Points += 1
+
+		player1.Reset()
+		player2.Reset()
+		ball.Reset()
 	}
 }
 
