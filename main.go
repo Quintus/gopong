@@ -66,8 +66,8 @@ type GameObject interface {
 
 func NewPlayer(x float32) *Player {
 	var player Player
-	player.W = 5.0
-	player.H = 20.0
+	player.W = 10.0
+	player.H = 50.0
 	player.origX = x
 	player.Reset()
 	return &player
@@ -103,7 +103,7 @@ func (self *Player) Move(delta float32) {
 
 func NewBall() *Ball {
 	var ball Ball
-	ball.Radius = 5.0
+	ball.Radius = 10.0
 	ball.Xspeed = SPEED
 	ball.Yspeed = SPEED
 	ball.Reset()
@@ -127,7 +127,7 @@ func (self *Ball) Draw() {
 		C.float(self.X),
 		C.float(self.Y),
 		C.float(self.Radius),
-		C.al_map_rgb(0, 0, 255))
+		C.al_map_rgb(255, 255, 0))
 }
 
 func (self *Ball) Reset() {
