@@ -83,6 +83,7 @@ func NewPlayer(x float32) *Player {
 func (self *Player) Reset() {
 	self.X = self.origX
 	self.Y = float32(WINDOWHEIGHT) * 0.5 - self.H * 0.5
+	self.Points = 0
 }
 
 func (self *Player) Update() {
@@ -195,7 +196,7 @@ func mainloop(p_evqueue *C.ALLEGRO_EVENT_QUEUE) {
 			case C.ALLEGRO_EVENT_DISPLAY_CLOSE:
 				run = false
 			case C.ALLEGRO_EVENT_KEY_DOWN:
-				handle_key_down(C.extract_keyboard_event(&evt).keycode, player1, player2, &run);
+				handle_key_down(C.extract_keyboard_event(&evt).keycode, player1, player2, ball, &run);
 			case C.ALLEGRO_EVENT_KEY_UP:
 				handle_key_up(C.extract_keyboard_event(&evt).keycode, player1, player2, &run);
 			}
@@ -260,26 +261,30 @@ func check_collisions(player1 *Player, player2 *Player, ball *Ball) {
 	}
 }
 
-func handle_key_down(keycode C.int, player1 *Player, player2 *Player, run *bool) {
+func handle_key_down(keycode C.int, player1 *Player, player2 *Player, ball *Ball, run *bool) {
 	switch (keycode) {
 	case C.ALLEGRO_KEY_ESCAPE:
 		*run = false
 	case C.ALLEGRO_KEY_UP:
-		player1.Speed = -SPEED
-	case C.ALLEGRO_KEY_DOWN:
-		player1.Speed = SPEED
-	case C.ALLEGRO_KEY_W:
 		player2.Speed = -SPEED
-	case C.ALLEGRO_KEY_S:
+	case C.ALLEGRO_KEY_DOWN:
 		player2.Speed = SPEED
+	case C.ALLEGRO_KEY_W:
+		player1.Speed = -SPEED
+	case C.ALLEGRO_KEY_S:
+		player1.Speed = SPEED
+	case C.ALLEGRO_KEY_ENTER:
+		player1.Reset()
+		player2.Reset()
+		ball.Reset()
 	}
 }
 
 func handle_key_up(keycode C.int,  player1 *Player, player2 *Player, run *bool) {
 	switch keycode {
 	case C.ALLEGRO_KEY_UP, C.ALLEGRO_KEY_DOWN:
-		player1.Speed = 0
-	case C.ALLEGRO_KEY_W, C.ALLEGRO_KEY_S:
 		player2.Speed = 0
+	case C.ALLEGRO_KEY_W, C.ALLEGRO_KEY_S:
+		player1.Speed = 0
 	}
 }
