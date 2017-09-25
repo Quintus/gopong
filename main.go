@@ -46,21 +46,22 @@ import (
 const WINDOWWIDTH int = 640
 const WINDOWHEIGHT int = 480
 const SPEED float32 = 2.0
+
 var game_font *C.ALLEGRO_FONT
 
 type Player struct {
-	X float32
-	Y float32
-	W float32
-	H float32
-	Speed float32
+	X      float32
+	Y      float32
+	W      float32
+	H      float32
+	Speed  float32
 	Points int
-	origX float32
+	origX  float32
 }
 
 type Ball struct {
-	X float32
-	Y float32
+	X      float32
+	Y      float32
 	Radius float32
 	Xspeed float32
 	Yspeed float32
@@ -82,7 +83,7 @@ func NewPlayer(x float32) *Player {
 
 func (self *Player) Reset() {
 	self.X = self.origX
-	self.Y = float32(WINDOWHEIGHT) * 0.5 - self.H * 0.5
+	self.Y = float32(WINDOWHEIGHT)*0.5 - self.H*0.5
 	self.Points = 0
 }
 
@@ -94,8 +95,8 @@ func (self *Player) Draw() {
 	C.al_draw_filled_rectangle(
 		C.float(self.X),
 		C.float(self.Y),
-		C.float(self.X + self.W),
-		C.float(self.Y + self.H),
+		C.float(self.X+self.W),
+		C.float(self.Y+self.H),
 		C.al_map_rgb(255, 0, 0))
 }
 
@@ -104,7 +105,7 @@ func (self *Player) Move(delta float32) {
 
 	if self.Y < 0 {
 		self.Y = 0
-	} else if self.Y + self.H > float32(WINDOWHEIGHT) {
+	} else if self.Y+self.H > float32(WINDOWHEIGHT) {
 		self.Y = float32(WINDOWHEIGHT) - self.H
 	}
 }
@@ -123,9 +124,9 @@ func (self *Ball) Update() {
 	self.Y += self.Yspeed
 
 	switch {
-	case self.Y - self.Radius <= 0:
+	case self.Y-self.Radius <= 0:
 		self.Yspeed = -self.Yspeed
-	case self.Y + self.Radius >= float32(WINDOWHEIGHT):
+	case self.Y+self.Radius >= float32(WINDOWHEIGHT):
 		self.Yspeed = -self.Yspeed
 	}
 }
@@ -185,20 +186,20 @@ func mainloop(p_evqueue *C.ALLEGRO_EVENT_QUEUE) {
 	player2 := NewPlayer(float32(WINDOWWIDTH) - 50.0)
 	ball := NewBall()
 
-	game_objects := [...]GameObject{ player1, player2, ball }
+	game_objects := [...]GameObject{player1, player2, ball}
 
 	run := true
 	for run {
 		// Handle events
 		var evt C.ALLEGRO_EVENT
 		for C.al_get_next_event(p_evqueue, &evt) {
-			switch (C.extract_event(&evt)) {
+			switch C.extract_event(&evt) {
 			case C.ALLEGRO_EVENT_DISPLAY_CLOSE:
 				run = false
 			case C.ALLEGRO_EVENT_KEY_DOWN:
-				handle_key_down(C.extract_keyboard_event(&evt).keycode, player1, player2, ball, &run);
+				handle_key_down(C.extract_keyboard_event(&evt).keycode, player1, player2, ball, &run)
 			case C.ALLEGRO_EVENT_KEY_UP:
-				handle_key_up(C.extract_keyboard_event(&evt).keycode, player1, player2, &run);
+				handle_key_up(C.extract_keyboard_event(&evt).keycode, player1, player2, &run)
 			}
 		}
 
@@ -221,7 +222,7 @@ func update(player1 *Player, player2 *Player, ball *Ball, game_objects []GameObj
 	check_collisions(player1, player2, ball)
 }
 
-func draw (player1 *Player, player2 *Player, game_objects []GameObject) {
+func draw(player1 *Player, player2 *Player, game_objects []GameObject) {
 	for _, obj := range game_objects {
 		obj.Draw()
 	}
@@ -235,16 +236,16 @@ func draw (player1 *Player, player2 *Player, game_objects []GameObject) {
 	defer C.free(unsafe.Pointer(cpoints2))
 
 	C.al_draw_text(game_font, C.al_map_rgb(255, 255, 255), 10, 10, 0, cpoints1)
-	C.al_draw_text(game_font, C.al_map_rgb(255, 255, 255), C.float(WINDOWWIDTH - 10), 10, C.ALLEGRO_ALIGN_RIGHT, cpoints2)
+	C.al_draw_text(game_font, C.al_map_rgb(255, 255, 255), C.float(WINDOWWIDTH-10), 10, C.ALLEGRO_ALIGN_RIGHT, cpoints2)
 }
 
 func check_collisions(player1 *Player, player2 *Player, ball *Ball) {
 	// Return ball and speed it up
-	for x := ball.X - 0.5 * ball.Radius; x < ball.X + 0.5 * ball.Radius; x++ {
-		if (x >= player1.X && x < player1.X + player1.W) && (ball.Y >= player1.Y && ball.Y < player1.Y + player1.H) {
+	for x := ball.X - 0.5*ball.Radius; x < ball.X+0.5*ball.Radius; x++ {
+		if (x >= player1.X && x < player1.X+player1.W) && (ball.Y >= player1.Y && ball.Y < player1.Y+player1.H) {
 			ball.Turn()
 			break
-		} else if (x >= player2.X && x < player2.X + player2.W) && (ball.Y >= player2.Y && ball.Y < player2.Y + player2.H) {
+		} else if (x >= player2.X && x < player2.X+player2.W) && (ball.Y >= player2.Y && ball.Y < player2.Y+player2.H) {
 			ball.Turn()
 			break
 		}
@@ -254,7 +255,7 @@ func check_collisions(player1 *Player, player2 *Player, ball *Ball) {
 		player2.Points += 1
 
 		ball.Reset()
-	} else if ball.X + ball.Radius * 0.5 >= float32(WINDOWWIDTH) {
+	} else if ball.X+ball.Radius*0.5 >= float32(WINDOWWIDTH) {
 		player1.Points += 1
 
 		ball.Reset()
@@ -262,7 +263,7 @@ func check_collisions(player1 *Player, player2 *Player, ball *Ball) {
 }
 
 func handle_key_down(keycode C.int, player1 *Player, player2 *Player, ball *Ball, run *bool) {
-	switch (keycode) {
+	switch keycode {
 	case C.ALLEGRO_KEY_ESCAPE:
 		*run = false
 	case C.ALLEGRO_KEY_UP:
@@ -280,7 +281,7 @@ func handle_key_down(keycode C.int, player1 *Player, player2 *Player, ball *Ball
 	}
 }
 
-func handle_key_up(keycode C.int,  player1 *Player, player2 *Player, run *bool) {
+func handle_key_up(keycode C.int, player1 *Player, player2 *Player, run *bool) {
 	switch keycode {
 	case C.ALLEGRO_KEY_UP, C.ALLEGRO_KEY_DOWN:
 		player2.Speed = 0
