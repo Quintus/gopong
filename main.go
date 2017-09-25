@@ -18,11 +18,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 package main
 
 /*
-#cgo LDFLAGS: -lallegro -lallegro_primitives
+#cgo LDFLAGS: -lallegro_ttf -lallegro_font -lallegro_image -lallegro_primitives -lallegro
 #include <stdio.h>
 #include <stdlib.h>
 #include <allegro5/allegro.h>
 #include <allegro5/allegro_primitives.h>
+#include <allegro5/allegro_image.h>
+#include <allegro5/allegro_font.h>
+#include <allegro5/allegro_ttf.h>
 
 inline ALLEGRO_EVENT_TYPE extract_event(const ALLEGRO_EVENT* p_evt)
 {
@@ -35,11 +38,15 @@ inline const ALLEGRO_KEYBOARD_EVENT* extract_keyboard_event(const ALLEGRO_EVENT*
 }
 */
 import "C"
-import "fmt"
+import (
+	"fmt"
+	"unsafe"
+)
 
 const WINDOWWIDTH int = 640
 const WINDOWHEIGHT int = 480
 const SPEED float32 = 2.0
+var game_font *C.ALLEGRO_FONT
 
 type Player struct {
 	X float32
@@ -146,6 +153,9 @@ func main() {
 	C.al_install_system(C.ALLEGRO_VERSION_INT, nil)
 	C.al_install_keyboard()
 	C.al_init_primitives_addon()
+	C.al_init_image_addon()
+	C.al_init_font_addon()
+	C.al_init_ttf_addon()
 	defer C.al_uninstall_system()
 
 	fmt.Println("Start")
@@ -158,6 +168,11 @@ func main() {
 
 	C.al_register_event_source(p_evqueue, C.al_get_display_event_source(p_display))
 	C.al_register_event_source(p_evqueue, C.al_get_keyboard_event_source())
+
+	fontname := C.CString("DejaVuSansMono.ttf")
+	game_font = C.al_load_ttf_font(fontname, 20, 0)
+	defer C.al_destroy_font(game_font)
+	C.free(unsafe.Pointer(fontname))
 
 	mainloop(p_evqueue)
 
@@ -189,25 +204,37 @@ func mainloop(p_evqueue *C.ALLEGRO_EVENT_QUEUE) {
 		// Clear screen
 		C.al_clear_to_color(C.al_map_rgb(0, 0, 0))
 
-		update(game_objects[:])
-		check_collisions(player1, player2, ball)
-		draw(game_objects[:])
+		update(player1, player2, ball, game_objects[:])
+		draw(player1, player2, game_objects[:])
 
 		// Switch buffers
 		C.al_flip_display()
 	}
 }
 
-func update(game_objects []GameObject) {
+func update(player1 *Player, player2 *Player, ball *Ball, game_objects []GameObject) {
 	for _, obj := range game_objects {
 		obj.Update()
 	}
+
+	check_collisions(player1, player2, ball)
 }
 
-func draw (game_objects []GameObject) {
+func draw (player1 *Player, player2 *Player, game_objects []GameObject) {
 	for _, obj := range game_objects {
 		obj.Draw()
 	}
+
+	points1 := fmt.Sprintf("%04d", player1.Points)
+	points2 := fmt.Sprintf("%04d", player2.Points)
+
+	cpoints1 := C.CString(points1)
+	cpoints2 := C.CString(points2)
+	defer C.free(unsafe.Pointer(cpoints1))
+	defer C.free(unsafe.Pointer(cpoints2))
+
+	C.al_draw_text(game_font, C.al_map_rgb(255, 255, 255), 10, 10, 0, cpoints1)
+	C.al_draw_text(game_font, C.al_map_rgb(255, 255, 255), C.float(WINDOWWIDTH - 10), 10, C.ALLEGRO_ALIGN_RIGHT, cpoints2)
 }
 
 func check_collisions(player1 *Player, player2 *Player, ball *Ball) {
