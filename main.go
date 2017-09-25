@@ -54,8 +54,8 @@ type Ball struct {
 	X float32
 	Y float32
 	Radius float32
-	xspeed float32
-	yspeed float32
+	Xspeed float32
+	Yspeed float32
 }
 
 type GameObject interface {
@@ -95,18 +95,14 @@ func NewBall() *Ball {
 }
 
 func (self *Ball) Update() {
-	self.X += self.xspeed
-	self.Y += self.yspeed
+	self.X += self.Xspeed
+	self.Y += self.Yspeed
 
 	switch {
-	case self.X - self.Radius <= 0:
-		self.xspeed = -self.xspeed
-	case self.X + self.Radius >= float32(WINDOWWIDTH):
-		self.xspeed = -self.xspeed
 	case self.Y - self.Radius <= 0:
-		self.yspeed = -self.yspeed
+		self.Yspeed = -self.Yspeed
 	case self.Y + self.Radius >= float32(WINDOWHEIGHT):
-		self.yspeed = -self.yspeed
+		self.Yspeed = -self.Yspeed
 	}
 }
 
@@ -174,18 +170,46 @@ func mainloop(p_evqueue *C.ALLEGRO_EVENT_QUEUE) {
 		// Clear screen
 		C.al_clear_to_color(C.al_map_rgb(0, 0, 0))
 
-		// Update all objects in the game
-		for _, obj := range game_objects {
-			obj.Update()
-		}
-
-		// Draw them to the back buffer
-		for _, obj := range game_objects {
-			obj.Draw()
-		}
+		update(game_objects[:])
+		check_collisions(player1, player2, ball)
+		draw(game_objects[:])
 
 		// Switch buffers
 		C.al_flip_display()
+	}
+}
+
+func update(game_objects []GameObject) {
+	for _, obj := range game_objects {
+		obj.Update()
+	}
+}
+
+func draw (game_objects []GameObject) {
+	for _, obj := range game_objects {
+		obj.Draw()
+	}
+}
+
+func check_collisions(player1 *Player, player2 *Player, ball *Ball) {
+	for x := ball.X - 0.5 * ball.Radius; x < ball.X + 0.5 * ball.Radius; x++ {
+		if (x >= player1.X && x < player1.X + player1.W) && (ball.Y >= player1.Y && ball.Y < player1.Y + player1.H) {
+			ball.Xspeed = -ball.Xspeed
+			break
+		} else if (x >= player2.X && x < player2.X + player2.W) && (ball.Y >= player2.Y && ball.Y < player2.Y + player2.H) {
+			ball.Xspeed = -ball.Xspeed
+			break
+		}
+	}
+
+	if ball.X <= 0 {
+		player2.Points += 1
+		ball.X = float32(WINDOWWIDTH) * 0.5
+		ball.Y = float32(WINDOWHEIGHT) * 0.5
+	} else if ball.X + ball.Radius * 0.5 >= float32(WINDOWWIDTH) {
+		ball.X = float32(WINDOWWIDTH) * 0.5
+		ball.Y = float32(WINDOWHEIGHT) * 0.5
+		player1.Points += 1
 	}
 }
 
